@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>日历</title>
+	<style type="text/css">
+	.calendar{
+		width: 400px;box-shadow: 0px 0px 10px #ccc;border-radius: 10px;
+		margin: 200px auto;padding-bottom: 20px;
+	}
+	.title{
+		height: 40px;line-height: 40px;text-align: center;background-color:#00a1cb;color: #fff;border-radius: 10px 10px 0 0
+	}
+	.title span{
+		padding: 0 10px;
+
+	}
+	select{
+		cursor: pointer;
+	}
+	ul,ol{
+		list-style: none;
+		overflow: hidden;padding: 0;margin: 0;
+	}
+	ul li,ol li{
+			display: inline-block;
+			width:57px;
+			text-align: center;
+			height: 40px;line-height: 40px;overflow: hidden;
+		}
+	.red{
+		color: #046f9b
+	}
+	.green{
+		color: #fff;background-color: #00a1cb;opacity: 0.9
+	}
+	
+	.title em{
+		width: 30px;text-align: center;cursor: pointer;
+		margin: 0 10px;font-size: 20px;
+	}
+	</style>
+</head>
+<body>
+     <div class="calendar">
+     	<div class="title">
+     	    <em style="float: left;"><</em>
+     		<select class = 'years'></select>
+     		<span></span>
+     		<select class="month"></select>
+     		<em style="float: right;">></em>
+     	</div>
+		<ol></ol>
+		<ul></ul>
+    </div>
+	<script type="text/javascript">
+		
+		var thisDate = new Date();
+		
+		
+		var title = document.querySelector('.title')
+		var ospan = title.querySelector('span');
+		
+		//生成年份
+		var setYeays = 2000;
+		var select = document.querySelectorAll('select');
+		var setYeaysSelect = '';
+		for(var i = 0;i<25;i++){
+			if(setYeays+i == thisDate.getFullYear()){
+				setYeaysSelect+=`<option selected = 'selected' value=${setYeays+i}>${setYeays+i}</option>`
+			}else {
+				setYeaysSelect+=`<option value=${setYeays+i}>${setYeays+i}</option>`
+			}
+            
+		}
+		select[0].innerHTML = setYeaysSelect
+		//生成月份
+		var setMonths = ''
+		for(var i=1;i<12+1;i++){
+			if(i == thisDate.getMonth()+1){
+				setMonths +=`<option selected = 'selected' value = ${i}>${i}月</option>`
+			}else {
+				setMonths +=`<option value = ${i}>${i}月</option>`
+			}
+			
+		}
+		select[1].innerHTML = setMonths
+		var ol = document.querySelector("ol");
+		var week = ['七','一','二','三','四','五','六'];
+		var weekStr = '';
+		for(var i=0;i<week.length;i++){
+			i == 0 || i==6?weekColor = 'red':weekColor = ''
+            weekStr+=`<li class = ${weekColor}>${week[i]}</li>`
+		}
+		ol.innerHTML = weekStr;
+        //自动生成日历
+		setCalendar(thisDate.getFullYear(),thisDate.getMonth())
+        var em = title.querySelectorAll('em');
+        var newMoth = 0;
+        var newYear = 0;
+        em[0].onclick = function(){
+           setNextPrevMouth(-1)
+        }
+       em[1].onclick = function(){
+            setNextPrevMouth(1)
+        }
+        //给em的点击事件做函数分装处理
+        var thisY = thisDate.getFullYear();
+        var thisM = thisDate.getMonth()
+        function setNextPrevMouth(num){
+        	newMoth = newMoth+num;
+        	if(thisDate.getMonth()+newMoth == -1){
+              newYear = -1;
+              newMoth = 11 - thisM;
+              thisY = thisY +newYear
+              console.log(thisY)
+
+            }else if(thisDate.getMonth()+newMoth == 12){
+            	newYear = 1;
+                newMoth = 0 - thisM;
+                thisY =thisY+newYear
+            }
+            setCalendar(thisY,thisM+newMoth)
+        }
+        //选取年份
+        var selectY = document.querySelector(".years");
+        selectY.onchange =function(){
+
+        	var m = ospan.innerHTML.substring(5,6);
+            setCalendar(this.value,m-1)
+        }
+        var selectedM = document.querySelector(".month");
+        selectedM.onchange =function(){
+        	var y = ospan.innerHTML.substring(0, 4);
+            setCalendar(y,this.value-1)
+        }
+        function setCalendar(years,mouth){
+        	var ul = document.querySelector("ul");
+        	//获取总天数
+			var days = getDays(years,mouth)
+			//获取当月的第一天的星期几
+			var d = getFirstWeekDay(years,mouth);
+			var count = Math.ceil((days+d)/7)*7;
+			var thisDateColor = '';
+			var weekColor = '';
+            ul.innerHTML=''
+        	//生成日历
+			for(var i=1;i<=count;i++){
+				var day = i - d
+	            if ( day <=0 || day >days) {
+	            	day = ""
+	            }
+	            //当前日期高亮
+	            day == thisDate.getDate()&&years==thisDate.getFullYear()&&mouth==thisDate.getMonth()? thisDateColor = "green": thisDateColor = ""
+	             //周末日期显示红色的
+	             i%7 == 0 || i%7 == 1?weekColor = 'red':weekColor = ''
+				if (i%7==0) {
+					ul.innerHTML+=`<li class = ${thisDateColor } ${ weekColor}>${day}</li><br />`
+				}else{
+					ul.innerHTML+=`<li class = ${thisDateColor} ${ weekColor}>${day}</li>`
+				}
+			}
+			document.innerHTML = ul;
+			//生成当前的年月
+			ospan.innerHTML = `${years}年${Number(mouth)+1}月`
+        }
+
+		//获取到这个月份1日对应的星期数
+		//getDay()获取某个日期对应的星期数 0 == 星期天
+		function getFirstWeekDay (year,month) {
+			return new Date(year,month,1).getDay()
+		}
+		//获取总天数
+		function getDays(year,mouth){
+			var nextDay = new Date(year,mouth+1,1)
+			nextDay.setDate(nextDay.getDate()-1)
+			return nextDay.getDate()
+		}
+	</script>
+</body>
+</html>
